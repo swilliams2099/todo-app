@@ -4,26 +4,28 @@ import Todo from "./components/Todo";
 import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 
+
+const FILTER_MAP = {
+  All: () => true,
+  Active: (task) => !task.completed,
+  Completed: (task) => task.completed,
+};
+
+const FILTER_NAMES = Object.keys(FILTER_MAP);
+
 function App(props) {
 
   const [tasks, setTasks] = useState(props.tasks); // returns 2-item array
   // tasks = props.tasks
   // setTasks() changes tasks
 
-  // CALLBACK FUNCTIONS
-  // 1. ADD TASK
+  const [filter, setFilter] = useState("All"); // DEFAULT SHOW ALL TASKS
+
   function addTask(name) {
-    // alert(name);
-    // TODO add task to taskList with setTasks()
-    // make newTask object with parameters id, name, completed,
     const newTask = { id: `todo-${nanoid()}`, name, completed: false };
-    // taskList2 = [...taskList1];
-    // taskList2.push(newTask);
     setTasks([...tasks, newTask]);
-    console.log(tasks);
   }
 
-  // 2. TOGGLE COMPLETED
   function toggleTaskCompleted(id) {
     const updatedTasks = tasks.map((task) => {
       // if this task has the same ID as the edited task
@@ -37,40 +39,42 @@ function App(props) {
     setTasks(updatedTasks);
   }
 
-  // 3. DELETE TASK
   function deleteTask(id) {
-    // console.log(id);
-    // const updatedTasks = tasks.map((task) => {
-    //   if (id === task.id) {
-
-    //   }
     const remainingTasks = tasks.filter((task) => task.id !== id);
     setTasks(remainingTasks);
   }
 
-  // 4. EDIT TASK
   function editTask(id, newName) {
     const editedTaskList = tasks.map((task) => {
       if (id === task.id) {
-        return {...task, name: newName };
+        return { ...task, name: newName };
       }
       return task;
     });
     setTasks(editedTaskList);
   }
 
-  // RENDERING (?)
+  const filterList = FILTER_NAMES.map((name) => (
+    <FilterButton
+      key={name}
+      name={name}
+      isPressed={name === filter}
+      setFilter={setFilter}
+    />
+  ));
 
-  const taskList = tasks?.map((task) => (
-    <Todo
-      id={task.id}
-      name={task.name}
-      complete={task.completed}
-      key={task.id} // key is a reserved word
-      toggleTaskCompleted={toggleTaskCompleted}
-      deleteTask={deleteTask}
-      editTask={editTask}
-    />));
+  const taskList = tasks
+    ?.filter(FILTER_MAP[filter])
+    .map((task) => (
+      <Todo
+        id={task.id}
+        name={task.name}
+        completed={task.completed}
+        key={task.id} // key is a reserved word
+        toggleTaskCompleted={toggleTaskCompleted}
+        deleteTask={deleteTask}
+        editTask={editTask}
+      />));
 
   const tasksNoun = taskList.length !== 1 ? "tasks" : "task";
   const headingText = `${taskList.length} ${tasksNoun} remaining`;
@@ -81,9 +85,7 @@ function App(props) {
       {/* same name "addTask" is a coincidence; try onAddTask */}
       <Form addTask={addTask} />
       <div className="filters btn-group stack-exception">
-        <FilterButton />
-        <FilterButton />
-        <FilterButton />
+        {filterList}
       </div>
       <h2 id="list-heading">{headingText}</h2>
       <ul
